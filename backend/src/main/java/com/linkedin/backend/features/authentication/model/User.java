@@ -12,6 +12,7 @@ import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextFi
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity(name = "users")
@@ -31,6 +32,7 @@ public class User {
     private String password;
     private String passwordResetToken = null;
     private LocalDateTime passwordResetTokenExpiryDate = null;
+    // Dans la classe User.java
 
     @FullTextField(analyzer = "standard")
     private String firstName = null;
@@ -49,7 +51,15 @@ public class User {
     @JsonIgnore
     @OneToMany(mappedBy = "recipient", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Notification> receivedNotifications;
-
+    @JsonIgnore
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<com.linkedin.backend.features.profile.model.Experience> experiences = new ArrayList<>();
+    @JsonIgnore
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<com.linkedin.backend.features.profile.model.Education> educations = new ArrayList<>();
+    @JsonIgnore
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<com.linkedin.backend.features.profile.model.Skill> skills = new ArrayList<>();
     @JsonIgnore
     @OneToMany(mappedBy = "actor", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Notification> actedNotifications;
@@ -143,6 +153,30 @@ public class User {
         updateProfileCompletionStatus();
     }
 
+
+    public List<com.linkedin.backend.features.profile.model.Experience> getExperiences() {
+        return experiences;
+    }
+
+    public void setExperiences(List<com.linkedin.backend.features.profile.model.Experience> experiences) {
+        this.experiences = experiences;
+    }
+
+    public List<com.linkedin.backend.features.profile.model.Education> getEducations() {
+        return educations;
+    }
+
+    public void setEducations(List<com.linkedin.backend.features.profile.model.Education> educations) {
+        this.educations = educations;
+    }
+
+    public List<com.linkedin.backend.features.profile.model.Skill> getSkills() {
+        return skills;
+    }
+
+    public void setSkills(List<com.linkedin.backend.features.profile.model.Skill> skills) {
+        this.skills = skills;
+    }
     public String getLastName() {
         return lastName;
     }

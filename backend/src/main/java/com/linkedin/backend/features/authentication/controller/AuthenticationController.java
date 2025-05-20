@@ -3,6 +3,7 @@ package com.linkedin.backend.features.authentication.controller;
 import java.io.IOException;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.transaction.annotation.Transactional; // Nouvel import
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,6 +33,8 @@ public class AuthenticationController {
     public AuthenticationController(AuthenticationService authenticationUserService) {
         this.authenticationUserService = authenticationUserService;
     }
+
+
 
     @PostMapping("/login")
     public AuthenticationResponseBody loginPage(@Valid @RequestBody AuthenticationRequestBody loginRequestBody) {
@@ -70,7 +73,7 @@ public class AuthenticationController {
 
     @PutMapping("/reset-password")
     public Response resetPassword(@RequestParam String newPassword, @RequestParam String token,
-            @RequestParam String email) {
+                                  @RequestParam String email) {
         authenticationUserService.resetPassword(email, newPassword, token);
         return new Response("Password reset successfully.");
     }
@@ -125,11 +128,13 @@ public class AuthenticationController {
     }
 
     @GetMapping("/users/me")
+    @Transactional(readOnly = true) // Ajout de l'annotation pour résoudre le problème de lazy loading
     public User getUser(@RequestAttribute("authenticatedUser") User user) {
         return user;
     }
 
     @GetMapping("/users/{id}")
+    @Transactional(readOnly = true) // Ajout de l'annotation pour résoudre le problème de lazy loading
     public User getUserById(@PathVariable Long id) {
         return authenticationUserService.getUserById(id);
     }

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <property name="LOGS" value="./logs" />
+
+    <!-- Console appender avec coloration syntaxique -->
+    <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} %highlight(%-5level) %magenta([%thread]) %cyan(%logger{36}) - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Fichier de logs général -->
+    <appender name="RollingFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOGS}/application.log</file>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOGS}/archived/application-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>10MB</maxFileSize>
+            <maxHistory>7</maxHistory>
+            <totalSizeCap>100MB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+
+    <!-- Fichier spécifique pour les erreurs -->
+    <appender name="ErrorFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOGS}/chatbot-error.log</file>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>ERROR</level>
+        </filter>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOGS}/archived/chatbot-error-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>10MB</maxFileSize>
+            <maxHistory>7</maxHistory>
+        </rollingPolicy>
+    </appender>
+
+    <!-- Fichier de logs spécifique au chatbot -->
+    <appender name="ChatbotFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOGS}/chatbot.log</file>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOGS}/archived/chatbot-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>10MB</maxFileSize>
+            <maxHistory>7</maxHistory>
+        </rollingPolicy>
+    </appender>
+
+    <!-- Configuration des niveaux de log par package -->
+    <logger name="com.linkedin.backend" level="INFO" />
+    <logger name="com.linkedin.backend.features.chatbot" level="DEBUG" additivity="false">
+        <appender-ref ref="Console" />
+        <appender-ref ref="ChatbotFile" />
+        <appender-ref ref="ErrorFile" />
+    </logger>
+
+    <!-- Logs OpenAI -->
+    <logger name="com.theokanning.openai" level="DEBUG" additivity="false">
+        <appender-ref ref="Console" />
+        <appender-ref ref="ChatbotFile" />
+        <appender-ref ref="ErrorFile" />
+    </logger>
+
+    <!-- Logs HTTP client -->
+    <logger name="okhttp3" level="DEBUG" additivity="false">
+        <appender-ref ref="ChatbotFile" />
+    </logger>
+    <logger name="retrofit2" level="DEBUG" additivity="false">
+        <appender-ref ref="ChatbotFile" />
+    </logger>
+
+    <!-- Logs Spring -->
+    <logger name="org.springframework.web" level="INFO" />
+    <logger name="org.hibernate" level="ERROR" />
+
+    <!-- Niveau par défaut -->
+    <root level="INFO">
+        <appender-ref ref="Console" />
+        <appender-ref ref="RollingFile" />
+        <appender-ref ref="ErrorFile" />
+    </root>
+</configuration>

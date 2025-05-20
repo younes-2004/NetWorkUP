@@ -7,9 +7,12 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 import com.linkedin.backend.features.authentication.model.User;
 import com.linkedin.backend.features.authentication.repository.UserRepository;
@@ -21,7 +24,9 @@ import com.linkedin.backend.features.networking.model.Status;
 import com.linkedin.backend.features.networking.repository.ConnectionRepository;
 
 @Configuration
+@Profile("dev") // Ajouter cette annotation pour activer uniquement avec le profil "dev"
 public class LoadDatabaseConfiguration {
+    private static final Logger logger = LoggerFactory.getLogger(LoadDatabaseConfiguration.class);
     private static final int NUM_USERS = 500;
     private static final int MIN_POSTS_PER_USER = 1;
     private static final int MAX_POSTS_PER_USER = 3;
@@ -36,11 +41,18 @@ public class LoadDatabaseConfiguration {
 
     @Bean
     public CommandLineRunner initDatabase(UserRepository userRepository, PostRepository postRepository,
-            ConnectionRepository connectionRepository) {
+                                          ConnectionRepository connectionRepository) {
         return args -> {
-            List<User> users = createUsers(userRepository);
-            createConnections(connectionRepository, users);
-            createPosts(postRepository, users);
+            // Vérifier si la base de données contient déjà des utilisateurs
+            if (userRepository.count() == 0) {
+                logger.info("Initialisation de la base de données avec des données de test (profil: dev)");
+                List<User> users = createUsers(userRepository);
+                createConnections(connectionRepository, users);
+                createPosts(postRepository, users);
+                logger.info("Base de données initialisée avec {} utilisateurs, et leurs posts/connexions", users.size());
+            } else {
+                logger.info("La base de données contient déjà des données, initialisation ignorée (profil: dev)");
+            }
         };
     }
 
@@ -183,7 +195,7 @@ public class LoadDatabaseConfiguration {
     }
 
     private User createUser(String email, String password, String firstName, String lastName,
-            String position, String company, String location, String profilePicture) {
+                            String position, String company, String location, String profilePicture) {
         User user = new User(email, encoder.encode(password));
         user.setEmailVerified(true);
         user.setFirstName(firstName);

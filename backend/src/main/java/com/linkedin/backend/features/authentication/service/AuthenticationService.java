@@ -17,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional; // CHANGÉ: import de Spring au lieu de Jakarta
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
@@ -34,9 +35,10 @@ import com.linkedin.backend.features.storage.service.StorageService;
 import io.jsonwebtoken.Claims;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import jakarta.transaction.Transactional;
+// SUPPRIMÉ: import jakarta.transaction.Transactional;
 
 @Service
+@Transactional // CHANGÉ: maintenant c'est l'annotation de Spring
 public class AuthenticationService {
     private static final Logger logger = LoggerFactory.getLogger(AuthenticationService.class);
     private final UserRepository userRepository;
@@ -53,12 +55,12 @@ public class AuthenticationService {
 
 
     public AuthenticationService(UserRepository userRepository, Encoder encoder, JsonWebToken jsonWebToken,
-            EmailService emailService, RestTemplate restTemplate) {
+                                 EmailService emailService, RestTemplate restTemplate, RestTemplate restTemplate1) {
         this.userRepository = userRepository;
         this.encoder = encoder;
         this.jsonWebToken = jsonWebToken;
         this.emailService = emailService;
-        this.restTemplate = restTemplate;
+        this.restTemplate = restTemplate1;
         this.storageService = new StorageService();
     }
 
@@ -81,8 +83,8 @@ public class AuthenticationService {
             userRepository.save(user.get());
             String subject = "Email Verification";
             String body = String.format("Only one step to take full advantage of LinkedIn.\n\n"
-                    + "Enter this code to verify your email: " + "%s\n\n" + "The code will expire in " + "%s"
-                    + " minutes.",
+                            + "Enter this code to verify your email: " + "%s\n\n" + "The code will expire in " + "%s"
+                            + " minutes.",
                     emailVerificationToken, durationInMinutes);
             try {
                 emailService.sendEmail(email, subject, body);
@@ -148,12 +150,13 @@ public class AuthenticationService {
         return new AuthenticationResponseBody(authToken, "User registered successfully.");
     }
 
+    @Transactional(readOnly = true) // AJOUTÉ: optimisation pour lecture seule avec lazy loading
     public User getUser(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("User not found."));
     }
 
-    @Transactional
+    @Transactional // Conserver cette annotation
     public void deleteUser(Long userId) {
         User user = entityManager.find(User.class, userId);
         if (user != null) {
@@ -205,7 +208,7 @@ public class AuthenticationService {
     }
 
     public User updateUserProfile(User user, String firstName, String lastName, String company,
-            String position, String location, String about) {
+                                  String position, String location, String about) {
         if (firstName != null)
             user.setFirstName(firstName);
         if (lastName != null)
@@ -249,9 +252,9 @@ public class AuthenticationService {
         return userRepository.save(user);
     }
 
+    @Transactional(readOnly = true) // AJOUTÉ: pour éviter les problèmes de lazy loading
     public User getUserById(Long receiverId) {
         return userRepository.findById(receiverId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found."));
     }
-
 }
